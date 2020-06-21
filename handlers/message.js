@@ -1,3 +1,5 @@
 module.exports = function onMessage(message, { client }) {
-  console.log(message)
+  if (typeof message.content !== 'string') {
+    return
+  }
 }
