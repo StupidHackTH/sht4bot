@@ -7,10 +7,14 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-client.on('message', msg => {
-  const id = require.resolve('./handlers/message')
-  delete require.cache[id]
-  require(id)(msg, { client })
+client.on('message', async msg => {
+  try {
+    const id = require.resolve('./handlers/message')
+    delete require.cache[id]
+    await require(id)(msg, { client })
+  } catch (error) {
+    console.error('Cannot process message', msg.content, 'from', msg.member.displayName, 'in', msg.channel, error)
+  }
 })
 
 app.use(express.static('public'))
