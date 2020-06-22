@@ -13,7 +13,7 @@ client.on('message', async msg => {
     delete require.cache[id]
     await require(id)(msg, { client })
   } catch (error) {
-    console.error('Cannot process message', msg.content, 'from', msg.member.displayName, 'in', msg.channel, error)
+    console.error('Cannot process message', msg.content, 'from', msg.author.tag, 'in', msg.channel, error)
   }
 })
 
