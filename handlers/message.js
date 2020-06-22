@@ -23,7 +23,7 @@ module.exports = async function onMessage(message, { client }) {
             '__code',
             'message',
             'client',
-            'try { return eval(__code) } catch (error) { return "```\n" + (error.stack || error) + "\n```" }',
+            'try { return eval(__code) } catch (error) { return "```\\n" + (error.stack || error) + "\\n```" }',
           )(code, message, client),
         ),
       )
