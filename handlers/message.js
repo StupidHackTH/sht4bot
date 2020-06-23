@@ -1,17 +1,17 @@
 const axios = require('axios')
 
-module.exports = async function onMessage(message, { client }) {
+module.exports = async function onMessage(message, { client, firebase, dataStoreRef }) {
   if (typeof message.content !== 'string') {
     return
   }
-
-  
   
   const adminIds = [
     // flicknote
     '104986860236877824',
   ]
 
+  const userKey = `discord${message.author.id}`
+  
   // Direct messages
   if (!message.guild) {
     if (message.content.startsWith(';')) {
@@ -26,8 +26,10 @@ module.exports = async function onMessage(message, { client }) {
             '__code',
             'message',
             'client',
+            'firebase',
+            'dataStoreRef',
             'try { return eval(__code) } catch (error) { return "```\\n" + (error.stack || error) + "\\n```" }',
-          )(code, message, client),
+          )(code, message, client, firebase, dataStoreRef),
         ),
       )
       return

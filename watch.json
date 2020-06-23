@@ -17,5 +17,5 @@
       "\\.json$"
     ]
   },
-  "throttle": 500
+  "throttle": 3000
 }
