@@ -1,6 +1,9 @@
 const axios = require('axios')
 
 module.exports = async function onMessage(message, { client, firebase, dataStoreRef }) {
+  if (message.author.bot) {
+    return
+  }
   if (typeof message.content !== 'string') {
     return
   }
@@ -59,5 +62,10 @@ module.exports = async function onMessage(message, { client, firebase, dataStore
       memberDisplayName: String(message.member.displayName),
       memberDisplayHexColor: String(message.member.displayHexColor),
     })
+  }
+  
+  // check mention
+  if (message.content.match(/<@724178986137026640>/)) {
+    message.reply('under construction ')
   }
 }
