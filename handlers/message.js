@@ -5,6 +5,8 @@ module.exports = async function onMessage(message, { client }) {
     return
   }
 
+  
+  
   const adminIds = [
     // flicknote
     '104986860236877824',

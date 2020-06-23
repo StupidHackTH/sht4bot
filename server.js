@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const Discord = require('discord.js')
 const client = new Discord.Client()
+const firebase = require('firebase');
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
