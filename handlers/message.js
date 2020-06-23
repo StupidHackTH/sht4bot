@@ -70,6 +70,7 @@ module.exports = async function onMessage(message, { client, firebase, storeRef 
         return
       } else if (ticketCodeFound) {
         await userTicketRef.set(ticketCodeRef.key)
+        await member.roles.add('721438879835619482') // Add participant role
         message.reply('Thank you, enjoy the hackathon!')
         return
       } else if (!authenticated) {
