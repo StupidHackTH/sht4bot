@@ -15,9 +15,9 @@ var firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig)
 
-const dataStoreRef = firebase.database().ref(`data/${process.env.DATASTORE_TENANT_ID}`)
-dataStoreRef.on('value', (store) => {
-  console.log('Data store updated', store.val())
+const storeRef = firebase.database().ref(`data/${process.env.DATASTORE_TENANT_ID}`)
+storeRef.on('value', (store) => {
+  console.log('Data store updated', new Date())
 })
 
 client.on('ready', () => {
@@ -28,7 +28,7 @@ client.on('message', async msg => {
   try {
     const id = require.resolve('./handlers/message')
     delete require.cache[id]
-    await require(id)(msg, { client, firebase, dataStoreRef })
+    await require(id)(msg, { client, firebase, storeRef })
   } catch (error) {
     console.error(
       'Cannot process message',

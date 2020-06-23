@@ -1,12 +1,14 @@
 const axios = require('axios')
 
-module.exports = async function onMessage(message, { client, firebase, dataStoreRef }) {
+module.exports = async function onMessage(message, { client, firebase, storeRef }) {
   if (message.author.bot) {
     return
   }
   if (typeof message.content !== 'string') {
     return
   }
+  const text = message.content.trim()
+  console.log(`[${new Date().toJSON()}] ${message.author.tag} ${JSON.stringify(text)}`)
   
   const adminIds = [
     // flicknote
@@ -14,6 +16,8 @@ module.exports = async function onMessage(message, { client, firebase, dataStore
   ]
 
   const userKey = `discord${message.author.id}`
+  const ticketRef = storeRef.child('profiles').child(userKey).child('ticket')
+  const authenticated = (await ticketRef.once('value')).exists()
   
   // Direct messages
   if (!message.guild) {
@@ -30,17 +34,32 @@ module.exports = async function onMessage(message, { client, firebase, dataStore
             'message',
             'client',
             'firebase',
-            'dataStoreRef',
+            'storeRef',
             'try { return eval(__code) } catch (error) { return "```\\n" + (error.stack || error) + "\\n```" }',
-          )(code, message, client, firebase, dataStoreRef),
+          )(code, message, client, firebase, storeRef),
         ),
       )
       return
     }
     
-    if (message.content.trim() === 'hello') {
+    if (text === 'hello') {
       const url = 'https://source.unsplash.com/collection/139386?t=' + Date.now()
       message.reply(url)
+      if (authenticated) {
+        message.reply('Enjoy the hackathon!!')
+      } else {
+        message.reply('Please identify yourself by sending me your **Eventpop ticket reference code** (6 digits).')
+      }
+    }
+    
+    if (text.match(/^[a-z0-9]{6}$/)) {
+      const ticketCodeRef = storeRef.child('tickets').child(text.toUpperCase())
+      
+      if (authenticated) {
+        message.reply('Sorry, you are already authenticated.')
+      } else {
+        message.reply('Please identify yourself by sending me your **Eventpop ticket reference code** (6 digits).')
+      }
     }
     
     return
@@ -65,7 +84,7 @@ module.exports = async function onMessage(message, { client, firebase, dataStore
   }
   
   // check mention
-  if (message.content.match(/<@724178986137026640>/)) {
-    message.reply('under construction ')
+  if (message.content.match(/<@!724178986137026640>/)) {
+    message.reply('under construction :pleading_face:')
   }
 }
