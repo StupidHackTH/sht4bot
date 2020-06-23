@@ -10,6 +10,7 @@ module.exports = async function onMessage(message, { client }) {
     '104986860236877824',
   ]
 
+  // Direct messages
   if (!message.guild) {
     if (message.content.startsWith(';')) {
       if (!adminIds.includes(message.author.id)) {
@@ -29,8 +30,14 @@ module.exports = async function onMessage(message, { client }) {
       )
       return
     }
+    
+    if (message.content.trim() === 'hello') {
+      const url = 'https://source.unsplash.com/collection/139386?t=' + Date.now()
+      message.reply(url)
+    }
+    
     return
-  }
+  } // End direct messages
 
   const hallChannels = [
     // hall
