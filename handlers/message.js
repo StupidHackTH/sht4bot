@@ -1,6 +1,7 @@
 const axios = require('axios')
 
 module.exports = async function onMessage(message, { client, firebase, storeRef }) {
+  const guild = client.guilds.resolve('721429287999111189')
   if (message.author.bot) {
     return
   }
@@ -16,8 +17,8 @@ module.exports = async function onMessage(message, { client, firebase, storeRef 
   ]
 
   const userKey = `discord${message.author.id}`
-  const ticketRef = storeRef.child('profiles').child(userKey).child('ticket')
-  const authenticated = (await ticketRef.once('value')).exists()
+  const userTicketRef = storeRef.child('profiles').child(userKey).child('ticket')
+  const authenticated = (await userTicketRef.once('value')).exists()
   
   // Direct messages
   if (!message.guild) {
@@ -35,8 +36,9 @@ module.exports = async function onMessage(message, { client, firebase, storeRef 
             'client',
             'firebase',
             'storeRef',
+            'guild',
             'try { return eval(__code) } catch (error) { return "```\\n" + (error.stack || error) + "\\n```" }',
-          )(code, message, client, firebase, storeRef),
+          )(code, message, client, firebase, storeRef, guild),
         ),
       )
       return
@@ -50,18 +52,39 @@ module.exports = async function onMessage(message, { client, firebase, storeRef 
       } else {
         message.reply('Please identify yourself by sending me your **Eventpop ticket reference code** (6 digits).')
       }
+      return
     }
-    
-    if (text.match(/^[a-z0-9]{6}$/)) {
+
+    // Authentication
+    if (text.match(/^[a-z0-9]{6}$/i)) {
       const ticketCodeRef = storeRef.child('tickets').child(text.toUpperCase())
-      
-      if (authenticated) {
-        message.reply('Sorry, you are already authenticated.')
-      } else {
-        message.reply('Please identify yourself by sending me your **Eventpop ticket reference code** (6 digits).')
+      const ticketCodeFound = (await ticketCodeRef.once('value')).exists()
+      if (ticketCodeFound && authenticated) {
+        message.reply('Sorry, you Discord account is already linked to Eventpop ticket. Please contact organizers for assistance.')
+        return
+      } else if (ticketCodeFound) {
+        await userTicketRef.set(ticketCodeRef.key)
+        message.reply('Thank you, enjoy the hackathon!')
+        return
+      } else if (!authenticated) {
+        message.reply('Sorry, ticket code not found.')
+        return
       }
     }
-    
+
+    // New team
+    if (text.toLowerCase() === 'new team') {
+      const teamRoles = [...guild.roles.cache.values()].filter(r => /^team/.test(r.name))
+      const 
+      const vacantTeamRoles = teamRoles.filter(r => r.members.size === 0).sort(() => Math.random() - 0.5)
+      if (vacantTeamRoles.length === 0) {
+        message.reply('Sorry, we have a maximum limit of 24 teams. Please join join an existing team or contact organizers for help.')
+        return
+      }
+      const role = vacantTeamRoles[0]
+      message.reply(role.name)
+    }
+
     return
   } // End direct messages
 
