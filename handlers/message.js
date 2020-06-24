@@ -30,10 +30,20 @@ module.exports = async function onMessage(
   const participantRole = guild.roles.resolve('721438879835619482')
 
   const updateTeamList = async () => {
+    const teamRoles = [...guild.roles.cache.values()]
+      .filter(r => /^team/.test(r.name))
+      .sort((a, b) => (a.name < b.name ? -1 : 1))
+    const newText =
+      '**Team list**:\n' +
+      teamRoles
+        .map(r => {
+          return `・ ${r} — ${[...r.members.values()].join(' ')}`
+        })
+        .join('\n')
     await guild.channels
       .resolve('725234327457234956')
       .messages.fetch('725234822531907594')
-      .then(m => m.edit(text))
+      .then(m => m.edit(newText))
   }
 
   // Direct messages
@@ -52,17 +62,21 @@ module.exports = async function onMessage(
         return
       }
       const code = message.content.slice(1)
+      const context = {
+        message,
+        client,
+        firebase,
+        storeRef,
+        guild,
+        updateTeamList,
+      }
       message.reply(
         String(
           await new Function(
             '__code',
-            'message',
-            'client',
-            'firebase',
-            'storeRef',
-            'guild',
+            ...Object.keys(context),
             'try { return eval(__code) } catch (error) { return "```\\n" + (error.stack || error) + "\\n```" }',
-          )(code, message, client, firebase, storeRef, guild),
+          )(code, ...Object.values(context)),
         ),
       )
       return
@@ -102,106 +116,6 @@ module.exports = async function onMessage(
       }
     }
 
-    //     // New team
-    //     if (text.toLowerCase() === 'new team') {
-    //       const teamRoles = [...guild.roles.cache.values()].filter(r =>
-    //         /^team/.test(r.name),
-    //       )
-    //       const vacantTeamRoles = teamRoles
-    //         .filter(r => r.members.size === 0)
-    //         .sort(() => Math.random() - 0.5)
-    //       const alreadyInTeamRoles = teamRoles.filter(r =>
-    //         r.members.has(message.author.id),
-    //       )
-    //       if (alreadyInTeamRoles.length > 0) {
-    //         message.reply(
-    //           'You already have a team. To leave your current team, say "leave team".',
-    //         )
-    //         return
-    //       }
-    //       if (vacantTeamRoles.length === 0) {
-    //         message.reply(
-    //           'Sorry, we have a maximum limit of 24 teams. Please join join an existing team or contact organizers for help.',
-    //         )
-    //         return
-    //       }
-    //       const role = vacantTeamRoles[0]
-    //       await member.roles.add(role)
-    //       const joinKey = String(100000 + Math.floor(Math.random() * 900000))
-    //       const joinKeyRef = storeRef
-    //         .child('teams')
-    //         .child(role.name)
-    //         .child('joinKey')
-    //       await joinKeyRef.set(joinKey)
-    //       message.reply(
-    //         `You are now on **${role.name}**. Other people can join your team by saying: "join ${role.name} ${joinKey}"`,
-    //       )
-    //       return
-    //     }
-
-    //     // Leave team
-    //     if (text.toLowerCase() === 'leave team') {
-    //       const teamRoles = [...guild.roles.cache.values()].filter(r =>
-    //         /^team/.test(r.name),
-    //       )
-    //       const alreadyInTeamRoles = teamRoles.filter(r =>
-    //         r.members.has(message.author.id),
-    //       )
-    //       if (alreadyInTeamRoles.length > 0) {
-    //         for (const role of alreadyInTeamRoles) {
-    //           await member.roles.remove(role)
-    //           message.reply(`You left **${role.name}**.`)
-    //         }
-    //         return
-    //       } else {
-    //         message.reply(
-    //           `You are not in a team. You must be inside a team in order to leave it.`,
-    //         )
-    //         return
-    //       }
-    //     }
-
-    //     // Join team
-    //     {
-    //       const match = text.match(/^join (team\d+) (\d+)$/i)
-    //       if (match) {
-    //         const teamRoles = [...guild.roles.cache.values()].filter(r =>
-    //           /^team/.test(r.name),
-    //         )
-    //         const alreadyInTeamRoles = teamRoles.filter(r =>
-    //           r.members.has(message.author.id),
-    //         )
-    //         if (alreadyInTeamRoles.length > 0) {
-    //           message.reply(
-    //             'You already have a team. To leave your current team, say "leave team".',
-    //           )
-    //           return
-    //         }
-    //         const teamName = match[1].toLowerCase()
-    //         const role = teamRoles.find(r => r.name === teamName)
-    //         if (!role) {
-    //           message.reply(`Sorry, ${teamName} not found.`)
-    //           return
-    //         }
-    //         const joinKeyRef = storeRef
-    //           .child('teams')
-    //           .child(role.name)
-    //           .child('joinKey')
-    //         const joinKey = (await joinKeyRef.once('value')).val()
-    //         if (match[2] === joinKey) {
-    //           await member.roles.add(role)
-    //           message.reply(
-    //             `You are now on **${role.name}**. Other people can join your team by saying: "join ${role.name} ${joinKey}"`,
-    //           )
-    //         } else {
-    //           message.reply(
-    //             `Sorry, join passcode is incorrect. Please make sure you have the correct join passcode, and try again. Please contact the organizers if you need help.`,
-    //           )
-    //         }
-    //         return
-    //       }
-    //     }
-
     if (text === 'help') {
       message.reply(`To write later............`)
       return
@@ -230,8 +144,19 @@ module.exports = async function onMessage(
   }
 
   // check mention
+  const botSpamChannelIds = [
+    // staging
+    '724518717370662982',
+    // production
+    '724181245134897202',
+  ]
   if (text.match(/^<@!724178986137026640>/)) {
     const command = text.replace(/^<@!724178986137026640>/, '').trim()
+    const member = message.member
+    if (!botSpamChannelIds.includes(message.channel.id)) {
+      message.reply('Please use this command in <#724181245134897202> only.')
+      return
+    }
     if (command.match(/^add/i)) {
       const teamRoles = [...guild.roles.cache.values()].filter(r =>
         /^team/.test(r.name),
@@ -275,7 +200,10 @@ module.exports = async function onMessage(
           await m.roles.add(role)
         }
         const newMembers = [...role.members.values()]
-        message.reply(`${role} now has these members: ${newMembers.join(', ')}`)
+        await message.reply(
+          `${role} now has these members: ${newMembers.join(', ')}`,
+        )
+        await updateTeamList()
       }
       if (existingTeamRole) {
         await addToRole(existingTeamRole)
@@ -290,6 +218,29 @@ module.exports = async function onMessage(
         return
       }
       return
+    }
+
+    // Leave team
+    if (command.toLowerCase() === 'leave team') {
+      const teamRoles = [...guild.roles.cache.values()].filter(r =>
+        /^team/.test(r.name),
+      )
+      const alreadyInTeamRoles = teamRoles.filter(r =>
+        r.members.has(message.author.id),
+      )
+      if (alreadyInTeamRoles.length > 0) {
+        for (const role of alreadyInTeamRoles) {
+          await member.roles.remove(role)
+          message.reply(`You left **${role.name}**.`)
+        }
+        await updateTeamList()
+        return
+      } else {
+        message.reply(
+          `You are not in a team. You must be inside a team in order to leave it.`,
+        )
+        return
+      }
     }
     message.reply('under construction :pleading_face:')
   }
