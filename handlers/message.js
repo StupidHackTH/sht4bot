@@ -29,6 +29,13 @@ module.exports = async function onMessage(
   const authenticated = (await userTicketRef.once('value')).exists()
   const participantRole = guild.roles.resolve('721438879835619482')
 
+  const updateTeamList = async () => {
+    await guild.channels
+      .resolve('725234327457234956')
+      .messages.fetch('725234822531907594')
+      .then(m => m.edit(text))
+  }
+
   // Direct messages
   if (!message.guild) {
     const member = guild.members.resolve(message.author.id)
@@ -95,105 +102,105 @@ module.exports = async function onMessage(
       }
     }
 
-    // New team
-    if (text.toLowerCase() === 'new team') {
-      const teamRoles = [...guild.roles.cache.values()].filter(r =>
-        /^team/.test(r.name),
-      )
-      const vacantTeamRoles = teamRoles
-        .filter(r => r.members.size === 0)
-        .sort(() => Math.random() - 0.5)
-      const alreadyInTeamRoles = teamRoles.filter(r =>
-        r.members.has(message.author.id),
-      )
-      if (alreadyInTeamRoles.length > 0) {
-        message.reply(
-          'You already have a team. To leave your current team, say "leave team".',
-        )
-        return
-      }
-      if (vacantTeamRoles.length === 0) {
-        message.reply(
-          'Sorry, we have a maximum limit of 24 teams. Please join join an existing team or contact organizers for help.',
-        )
-        return
-      }
-      const role = vacantTeamRoles[0]
-      await member.roles.add(role)
-      const joinKey = String(100000 + Math.floor(Math.random() * 900000))
-      const joinKeyRef = storeRef
-        .child('teams')
-        .child(role.name)
-        .child('joinKey')
-      await joinKeyRef.set(joinKey)
-      message.reply(
-        `You are now on **${role.name}**. Other people can join your team by saying: "join ${role.name} ${joinKey}"`,
-      )
-      return
-    }
+    //     // New team
+    //     if (text.toLowerCase() === 'new team') {
+    //       const teamRoles = [...guild.roles.cache.values()].filter(r =>
+    //         /^team/.test(r.name),
+    //       )
+    //       const vacantTeamRoles = teamRoles
+    //         .filter(r => r.members.size === 0)
+    //         .sort(() => Math.random() - 0.5)
+    //       const alreadyInTeamRoles = teamRoles.filter(r =>
+    //         r.members.has(message.author.id),
+    //       )
+    //       if (alreadyInTeamRoles.length > 0) {
+    //         message.reply(
+    //           'You already have a team. To leave your current team, say "leave team".',
+    //         )
+    //         return
+    //       }
+    //       if (vacantTeamRoles.length === 0) {
+    //         message.reply(
+    //           'Sorry, we have a maximum limit of 24 teams. Please join join an existing team or contact organizers for help.',
+    //         )
+    //         return
+    //       }
+    //       const role = vacantTeamRoles[0]
+    //       await member.roles.add(role)
+    //       const joinKey = String(100000 + Math.floor(Math.random() * 900000))
+    //       const joinKeyRef = storeRef
+    //         .child('teams')
+    //         .child(role.name)
+    //         .child('joinKey')
+    //       await joinKeyRef.set(joinKey)
+    //       message.reply(
+    //         `You are now on **${role.name}**. Other people can join your team by saying: "join ${role.name} ${joinKey}"`,
+    //       )
+    //       return
+    //     }
 
-    // Leave team
-    if (text.toLowerCase() === 'leave team') {
-      const teamRoles = [...guild.roles.cache.values()].filter(r =>
-        /^team/.test(r.name),
-      )
-      const alreadyInTeamRoles = teamRoles.filter(r =>
-        r.members.has(message.author.id),
-      )
-      if (alreadyInTeamRoles.length > 0) {
-        for (const role of alreadyInTeamRoles) {
-          await member.roles.remove(role)
-          message.reply(`You left **${role.name}**.`)
-        }
-        return
-      } else {
-        message.reply(
-          `You are not in a team. You must be inside a team in order to leave it.`,
-        )
-        return
-      }
-    }
+    //     // Leave team
+    //     if (text.toLowerCase() === 'leave team') {
+    //       const teamRoles = [...guild.roles.cache.values()].filter(r =>
+    //         /^team/.test(r.name),
+    //       )
+    //       const alreadyInTeamRoles = teamRoles.filter(r =>
+    //         r.members.has(message.author.id),
+    //       )
+    //       if (alreadyInTeamRoles.length > 0) {
+    //         for (const role of alreadyInTeamRoles) {
+    //           await member.roles.remove(role)
+    //           message.reply(`You left **${role.name}**.`)
+    //         }
+    //         return
+    //       } else {
+    //         message.reply(
+    //           `You are not in a team. You must be inside a team in order to leave it.`,
+    //         )
+    //         return
+    //       }
+    //     }
 
-    // Join team
-    {
-      const match = text.match(/^join (team\d+) (\d+)$/i)
-      if (match) {
-        const teamRoles = [...guild.roles.cache.values()].filter(r =>
-          /^team/.test(r.name),
-        )
-        const alreadyInTeamRoles = teamRoles.filter(r =>
-          r.members.has(message.author.id),
-        )
-        if (alreadyInTeamRoles.length > 0) {
-          message.reply(
-            'You already have a team. To leave your current team, say "leave team".',
-          )
-          return
-        }
-        const teamName = match[1].toLowerCase()
-        const role = teamRoles.find(r => r.name === teamName)
-        if (!role) {
-          message.reply(`Sorry, ${teamName} not found.`)
-          return
-        }
-        const joinKeyRef = storeRef
-          .child('teams')
-          .child(role.name)
-          .child('joinKey')
-        const joinKey = (await joinKeyRef.once('value')).val()
-        if (match[2] === joinKey) {
-          await member.roles.add(role)
-          message.reply(
-            `You are now on **${role.name}**. Other people can join your team by saying: "join ${role.name} ${joinKey}"`,
-          )
-        } else {
-          message.reply(
-            `Sorry, join passcode is incorrect. Please make sure you have the correct join passcode, and try again. Please contact the organizers if you need help.`,
-          )
-        }
-        return
-      }
-    }
+    //     // Join team
+    //     {
+    //       const match = text.match(/^join (team\d+) (\d+)$/i)
+    //       if (match) {
+    //         const teamRoles = [...guild.roles.cache.values()].filter(r =>
+    //           /^team/.test(r.name),
+    //         )
+    //         const alreadyInTeamRoles = teamRoles.filter(r =>
+    //           r.members.has(message.author.id),
+    //         )
+    //         if (alreadyInTeamRoles.length > 0) {
+    //           message.reply(
+    //             'You already have a team. To leave your current team, say "leave team".',
+    //           )
+    //           return
+    //         }
+    //         const teamName = match[1].toLowerCase()
+    //         const role = teamRoles.find(r => r.name === teamName)
+    //         if (!role) {
+    //           message.reply(`Sorry, ${teamName} not found.`)
+    //           return
+    //         }
+    //         const joinKeyRef = storeRef
+    //           .child('teams')
+    //           .child(role.name)
+    //           .child('joinKey')
+    //         const joinKey = (await joinKeyRef.once('value')).val()
+    //         if (match[2] === joinKey) {
+    //           await member.roles.add(role)
+    //           message.reply(
+    //             `You are now on **${role.name}**. Other people can join your team by saying: "join ${role.name} ${joinKey}"`,
+    //           )
+    //         } else {
+    //           message.reply(
+    //             `Sorry, join passcode is incorrect. Please make sure you have the correct join passcode, and try again. Please contact the organizers if you need help.`,
+    //           )
+    //         }
+    //         return
+    //       }
+    //     }
 
     if (text === 'help') {
       message.reply(`To write later............`)
@@ -234,7 +241,9 @@ module.exports = async function onMessage(
         return message.mentions.users.has(m.id) && m.id !== message.author.id
       })
       if (mentionedParticipants.length === 0) {
-        message.reply('Please mention at least 1 other participant.')
+        message.reply(
+          'Please mention at least 1 other participant. Note that participants must confirm using their ticket code before they can be added.',
+        )
         return
       }
       const unavailableParticipants = mentionedParticipants.filter(m => {
@@ -244,13 +253,42 @@ module.exports = async function onMessage(
         return !teamRoles.some(r => r.members.has(m.id))
       })
       if (unavailableParticipants.length > 0) {
-        message.reply('These participants are already in a team, so they cannot be added: ' + unavailableParticipants.join(', ') + '.')
+        message.reply(
+          'These participants are already in a team, so they cannot be added: ' +
+            unavailableParticipants.join(', ') +
+            '.',
+        )
       }
       if (availableParticipants.length === 0) {
-        message.reply('No members left to form a team.')
+        message.reply('No members left to form a team. Aborting.')
         return
       }
-      
+      const [existingTeamRole] = teamRoles.filter(r =>
+        r.members.has(message.author.id),
+      )
+      const [vacantTeamRole] = teamRoles
+        .filter(r => r.members.size === 0)
+        .sort(() => Math.random() - 0.5)
+      const addToRole = async role => {
+        const membersToAdd = [...availableParticipants, message.member]
+        for (const m of membersToAdd) {
+          await m.roles.add(role)
+        }
+        const newMembers = [...role.members.values()]
+        message.reply(`${role} now has these members: ${newMembers.join(', ')}`)
+      }
+      if (existingTeamRole) {
+        await addToRole(existingTeamRole)
+        return
+      } else if (vacantTeamRole) {
+        await addToRole(vacantTeamRole)
+        return
+      } else {
+        message.reply(
+          'Sorry, we have a maximum limit of 24 teams. Please join join an existing team or contact organizers for help.',
+        )
+        return
+      }
       return
     }
     message.reply('under construction :pleading_face:')
