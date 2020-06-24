@@ -173,7 +173,13 @@ module.exports = async function onMessage(message, { client, firebase, storeRef 
   }
   
   // check mention
-  if (message.content.match(/<@!724178986137026640>/)) {
+  if (text.match(/^<@!724178986137026640>/)) {
+    const command = text.replace(/^<@!724178986137026640>/, '').trim()
+    if (command.match(/^add/i)) {
+    message.reply('under construction :pleading_face:')
+      return
+    }
+    console.log(message.mentions.users)
     message.reply('under construction :pleading_face:')
   }
 }
