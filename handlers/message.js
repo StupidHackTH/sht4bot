@@ -176,7 +176,7 @@ module.exports = async function onMessage(
       )
       const allParticipants = [...participantRole.members.values()]
       const mentionedParticipants = allParticipants.filter(m => {
-        return message.mentions.users.has(m.id) && m.id !== message.author.id
+        return message.mentions.users.has(m.id) // && m.id !== message.author.id
       })
       if (mentionedParticipants.length === 0) {
         message.reply(
