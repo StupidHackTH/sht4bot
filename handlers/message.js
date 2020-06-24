@@ -119,7 +119,7 @@ module.exports = async function onMessage(
     }
 
     if (text === 'help') {
-      message.reply(`To write later............`)
+      message.reply(`https://docs.google.com/spreadsheets/d/1oTRklEoz-eD2xJrfRK8TFH1GKh2zf0lxMCNYn1HJR4A/edit#gid=128723652`)
       return
     }
 
@@ -244,6 +244,12 @@ module.exports = async function onMessage(
         return
       }
     }
+    
+    if (command.toLowerCase() === 'help') {
+      message.reply(`https://docs.google.com/spreadsheets/d/1oTRklEoz-eD2xJrfRK8TFH1GKh2zf0lxMCNYn1HJR4A/edit#gid=128723652`)
+      return
+    }
+
     message.reply('under construction :pleading_face:')
   }
 }
