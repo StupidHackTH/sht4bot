@@ -174,10 +174,10 @@ module.exports = async function onMessage(
         return
       }
       const unavailableParticipants = mentionedParticipants.filter(m => {
-        return teamRoles.some(r => r.members.has(m.id))
+        return false /// teamRoles.some(r => r.members.has(m.id))
       })
       const availableParticipants = mentionedParticipants.filter(m => {
-        return !teamRoles.some(r => r.members.has(m.id))
+        return true // !teamRoles.some(r => r.members.has(m.id))
       })
       if (unavailableParticipants.length > 0) {
         message.reply(
