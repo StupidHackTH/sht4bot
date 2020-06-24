@@ -1,6 +1,9 @@
 const axios = require('axios')
 
-module.exports = async function onMessage(message, { client, firebase, storeRef }) {
+module.exports = async function onMessage(
+  message,
+  { client, firebase, storeRef },
+) {
   const guild = client.guilds.resolve('721429287999111189')
   if (message.author.bot) {
     return
@@ -9,22 +12,30 @@ module.exports = async function onMessage(message, { client, firebase, storeRef 
     return
   }
   const text = message.content.trim()
-  console.log(`[${new Date().toJSON()}] ${message.author.tag} ${JSON.stringify(text)}`)
-  
+  console.log(
+    `[${new Date().toJSON()}] ${message.author.tag} ${JSON.stringify(text)}`,
+  )
+
   const adminIds = [
     // flicknote
     '104986860236877824',
   ]
 
   const userKey = `discord${message.author.id}`
-  const userTicketRef = storeRef.child('profiles').child(userKey).child('ticket')
+  const userTicketRef = storeRef
+    .child('profiles')
+    .child(userKey)
+    .child('ticket')
   const authenticated = (await userTicketRef.once('value')).exists()
-  
+  const participantRole = guild.roles.resolve('721438879835619482')
+
   // Direct messages
   if (!message.guild) {
     const member = guild.members.resolve(message.author.id)
     if (!member) {
-      message.reply('You are not in the hackathon discord server. Please join first!')
+      message.reply(
+        'You are not in the hackathon discord server. Please join first!',
+      )
       return
     }
 
@@ -49,14 +60,17 @@ module.exports = async function onMessage(message, { client, firebase, storeRef 
       )
       return
     }
-    
+
     if (text === 'hello') {
-      const url = 'https://source.unsplash.com/collection/139386?t=' + Date.now()
+      const url =
+        'https://source.unsplash.com/collection/139386?t=' + Date.now()
       message.reply(url)
       if (authenticated) {
         message.reply('Enjoy the hackathon!!')
       } else {
-        message.reply('Please identify yourself by sending me your **Eventpop ticket reference code** (6 digits).')
+        message.reply(
+          'Please identify yourself by sending me your **Eventpop ticket reference code** (6 digits).',
+        )
       }
       return
     }
@@ -66,7 +80,9 @@ module.exports = async function onMessage(message, { client, firebase, storeRef 
       const ticketCodeRef = storeRef.child('tickets').child(text.toUpperCase())
       const ticketCodeFound = (await ticketCodeRef.once('value')).exists()
       if (ticketCodeFound && authenticated) {
-        message.reply('Sorry, you Discord account is already linked to Eventpop ticket. Please contact organizers for assistance.')
+        message.reply(
+          'Sorry, you Discord account is already linked to Eventpop ticket. Please contact organizers for assistance.',
+        )
         return
       } else if (ticketCodeFound) {
         await userTicketRef.set(ticketCodeRef.key)
@@ -81,30 +97,49 @@ module.exports = async function onMessage(message, { client, firebase, storeRef 
 
     // New team
     if (text.toLowerCase() === 'new team') {
-      const teamRoles = [...guild.roles.cache.values()].filter(r => /^team/.test(r.name))
-      const vacantTeamRoles = teamRoles.filter(r => r.members.size === 0).sort(() => Math.random() - 0.5)
-      const alreadyInTeamRoles = teamRoles.filter(r => r.members.has(message.author.id))
+      const teamRoles = [...guild.roles.cache.values()].filter(r =>
+        /^team/.test(r.name),
+      )
+      const vacantTeamRoles = teamRoles
+        .filter(r => r.members.size === 0)
+        .sort(() => Math.random() - 0.5)
+      const alreadyInTeamRoles = teamRoles.filter(r =>
+        r.members.has(message.author.id),
+      )
       if (alreadyInTeamRoles.length > 0) {
-        message.reply('You already have a team. To leave your current team, say "leave team".')
+        message.reply(
+          'You already have a team. To leave your current team, say "leave team".',
+        )
         return
       }
       if (vacantTeamRoles.length === 0) {
-        message.reply('Sorry, we have a maximum limit of 24 teams. Please join join an existing team or contact organizers for help.')
+        message.reply(
+          'Sorry, we have a maximum limit of 24 teams. Please join join an existing team or contact organizers for help.',
+        )
         return
       }
       const role = vacantTeamRoles[0]
       await member.roles.add(role)
       const joinKey = String(100000 + Math.floor(Math.random() * 900000))
-      const joinKeyRef = storeRef.child('teams').child(role.name).child('joinKey')
+      const joinKeyRef = storeRef
+        .child('teams')
+        .child(role.name)
+        .child('joinKey')
       await joinKeyRef.set(joinKey)
-      message.reply(`You are now on **${role.name}**. Other people can join your team by saying: "join ${role.name} ${joinKey}"`)
+      message.reply(
+        `You are now on **${role.name}**. Other people can join your team by saying: "join ${role.name} ${joinKey}"`,
+      )
       return
     }
 
     // Leave team
     if (text.toLowerCase() === 'leave team') {
-      const teamRoles = [...guild.roles.cache.values()].filter(r => /^team/.test(r.name))
-      const alreadyInTeamRoles = teamRoles.filter(r => r.members.has(message.author.id))
+      const teamRoles = [...guild.roles.cache.values()].filter(r =>
+        /^team/.test(r.name),
+      )
+      const alreadyInTeamRoles = teamRoles.filter(r =>
+        r.members.has(message.author.id),
+      )
       if (alreadyInTeamRoles.length > 0) {
         for (const role of alreadyInTeamRoles) {
           await member.roles.remove(role)
@@ -112,19 +147,27 @@ module.exports = async function onMessage(message, { client, firebase, storeRef 
         }
         return
       } else {
-        message.reply(`You are not in a team. You must be inside a team in order to leave it.`)
+        message.reply(
+          `You are not in a team. You must be inside a team in order to leave it.`,
+        )
         return
       }
     }
-    
+
     // Join team
     {
       const match = text.match(/^join (team\d+) (\d+)$/i)
       if (match) {
-        const teamRoles = [...guild.roles.cache.values()].filter(r => /^team/.test(r.name))
-        const alreadyInTeamRoles = teamRoles.filter(r => r.members.has(message.author.id))
+        const teamRoles = [...guild.roles.cache.values()].filter(r =>
+          /^team/.test(r.name),
+        )
+        const alreadyInTeamRoles = teamRoles.filter(r =>
+          r.members.has(message.author.id),
+        )
         if (alreadyInTeamRoles.length > 0) {
-          message.reply('You already have a team. To leave your current team, say "leave team".')
+          message.reply(
+            'You already have a team. To leave your current team, say "leave team".',
+          )
           return
         }
         const teamName = match[1].toLowerCase()
@@ -133,18 +176,25 @@ module.exports = async function onMessage(message, { client, firebase, storeRef 
           message.reply(`Sorry, ${teamName} not found.`)
           return
         }
-        const joinKeyRef = storeRef.child('teams').child(role.name).child('joinKey')
+        const joinKeyRef = storeRef
+          .child('teams')
+          .child(role.name)
+          .child('joinKey')
         const joinKey = (await joinKeyRef.once('value')).val()
         if (match[2] === joinKey) {
           await member.roles.add(role)
-          message.reply(`You are now on **${role.name}**. Other people can join your team by saying: "join ${role.name} ${joinKey}"`)
+          message.reply(
+            `You are now on **${role.name}**. Other people can join your team by saying: "join ${role.name} ${joinKey}"`,
+          )
         } else {
-          message.reply(`Sorry, join passcode is incorrect. Please make sure you have the correct join passcode, and try again. Please contact the organizers if you need help.`)
+          message.reply(
+            `Sorry, join passcode is incorrect. Please make sure you have the correct join passcode, and try again. Please contact the organizers if you need help.`,
+          )
         }
         return
       }
     }
-    
+
     if (text === 'help') {
       message.reply(`To write later............`)
       return
@@ -171,15 +221,38 @@ module.exports = async function onMessage(message, { client, firebase, storeRef 
       memberDisplayHexColor: String(message.member.displayHexColor),
     })
   }
-  
+
   // check mention
   if (text.match(/^<@!724178986137026640>/)) {
     const command = text.replace(/^<@!724178986137026640>/, '').trim()
     if (command.match(/^add/i)) {
-    message.reply('under construction :pleading_face:')
+      const teamRoles = [...guild.roles.cache.values()].filter(r =>
+        /^team/.test(r.name),
+      )
+      const allParticipants = [...participantRole.members.values()]
+      const mentionedParticipants = allParticipants.filter(m => {
+        return message.mentions.users.has(m.id) && m.id !== message.author.id
+      })
+      if (mentionedParticipants.length === 0) {
+        message.reply('Please mention at least 1 other participant.')
+        return
+      }
+      const unavailableParticipants = mentionedParticipants.filter(m => {
+        return teamRoles.some(r => r.members.has(m.id))
+      })
+      const availableParticipants = mentionedParticipants.filter(m => {
+        return !teamRoles.some(r => r.members.has(m.id))
+      })
+      if (unavailableParticipants.length > 0) {
+        message.reply('These participants are already in a team, so they cannot be added: ' + unavailableParticipants.join(', ') + '.')
+      }
+      if (availableParticipants.length === 0) {
+        message.reply('No members left to form a team.')
+        return
+      }
+      
       return
     }
-    console.log(message.mentions.users)
     message.reply('under construction :pleading_face:')
   }
 }
