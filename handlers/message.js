@@ -46,6 +46,17 @@ module.exports = async function onMessage(
       // message id
       .messages.fetch('725234822531907594')
       .then(m => m.edit(newText))
+
+    const participantRole = guild.roles.resolve('721438879835619482')
+    const inTeam = m => teamRoles.some(t => [...m.roles.cache.values()].includes(t))
+    for (const p of [...participantRole.members.values()]) {
+      const hasNoTeamRole = p.roles.cache.has('725382685245309008')
+      if (!inTeam(p) && !hasNoTeamRole) {
+        p.roles.add('725382685245309008')
+      } else if (inTeam(p) && hasNoTeamRole) {
+        p.roles.remove('725382685245309008')
+      }
+    }
   }
 
   // Direct messages
