@@ -190,9 +190,20 @@ module.exports = async function onMessage(
         message.reply('No members left to form a team. Aborting.')
         return
       }
-      const [existingTeamRole] = teamRoles.filter(r =>
+      const existingTeamRoles = teamRoles.filter(r =>
         r.members.has(message.author.id),
       )
+      if (existingTeamRoles.length > 1) {
+        const selectedTeam = existingTeamRoles.find(r => message.mentions.roles.has(r.id))
+        if (selectedTeam) {
+          existingTeamRoles.length = 0
+          existingTeamRoles[0] = selectedTeam
+        } else {
+          message.reply('You are in multiple teams. Please tag the team you want to add the new members to.')
+          return
+        }
+      }
+      const [existingTeamRole] = existingTeamRoles
       const [vacantTeamRole] = teamRoles
         .filter(r => r.members.size === 0)
         .sort(() => Math.random() - 0.5)
@@ -223,13 +234,23 @@ module.exports = async function onMessage(
     }
 
     // Leave team
-    if (command.toLowerCase() === 'leave team') {
+    if (command.match(/^leave/i)) {
       const teamRoles = [...guild.roles.cache.values()].filter(r =>
         /^team/.test(r.name),
       )
       const alreadyInTeamRoles = teamRoles.filter(r =>
         r.members.has(message.author.id),
       )
+      if (alreadyInTeamRoles.length > 1) {
+        const selectedTeam = alreadyInTeamRoles.find(r => message.mentions.roles.has(r.id))
+        if (selectedTeam) {
+          alreadyInTeamRoles.length = 0
+          alreadyInTeamRoles[0] = selectedTeam
+        } else {
+          message.reply('You are in multiple teams. Please tag the team you want to leave.')
+          return
+        }
+      }
       if (alreadyInTeamRoles.length > 0) {
         for (const role of alreadyInTeamRoles) {
           await member.roles.remove(role)
