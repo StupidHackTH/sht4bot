@@ -41,7 +41,9 @@ module.exports = async function onMessage(
         })
         .join('\n')
     await guild.channels
+      // #status
       .resolve('725234327457234956')
+      // message id
       .messages.fetch('725234822531907594')
       .then(m => m.edit(newText))
   }
