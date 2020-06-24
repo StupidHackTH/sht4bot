@@ -152,8 +152,8 @@ module.exports = async function onMessage(
     // production
     '724181245134897202',
   ]
-  if (text.match(/^<@!724178986137026640>/)) {
-    const command = text.replace(/^<@!724178986137026640>/, '').trim()
+  if (text.match(/^<@!?724178986137026640>/)) {
+    const command = text.replace(/^<@!?724178986137026640>/, '').trim()
     const member = message.member
     if (!botSpamChannelIds.includes(message.channel.id)) {
       message.reply('Please use this command in <#724181245134897202> only.')
