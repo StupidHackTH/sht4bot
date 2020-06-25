@@ -282,6 +282,6 @@ module.exports = async function onMessage(
       return
     }
 
-    message.reply('under construction :pleading_face:')
+    message.reply('unknown command :pleading_face: -- try ‘help’')
   }
 }
