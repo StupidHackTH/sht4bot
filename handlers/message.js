@@ -53,6 +53,18 @@ module.exports = async function onMessage(
       .messages.fetch('725234822531907594')
       .then(m => m.edit(newText))
 
+    const teamCategories = [...guild.channels.cache.values()]
+      .filter(c => c.type === 'category' && c.name.match(/^team/))
+    for (const teamCategory of teamCategories) {
+      const defaultName = teamCategory.name.substr(0, 6)
+      const teamName = teamNames[defaultName] || defaultName
+      const targetCategoryName =
+        defaultName + (teamName === defaultName ? '' : ' - ' + teamName)
+      if (targetCategoryName !== teamCategory.name) {
+        teamCategory.setName(targetCategoryName)
+      }
+    }
+
     const participantRole = guild.roles.resolve('721438879835619482')
     const inTeam = m =>
       teamRoles.some(t => [...m.roles.cache.values()].includes(t))
@@ -90,15 +102,19 @@ module.exports = async function onMessage(
         guild,
         updateTeamList,
       }
-      message.reply(
-        String(
-          await new Function(
-            '__code',
-            ...Object.keys(context),
-            'try { return eval(__code) } catch (error) { return "```\\n" + (error.stack || error) + "\\n```" }',
-          )(code, ...Object.values(context)),
-        ),
-      )
+      try {
+        message.reply(
+          String(
+            await new Function(
+              '__code',
+              ...Object.keys(context),
+              'try { return eval(__code) } catch (error) { return "```\\n" + (error.stack || error) + "\\n```" }',
+            )(code, ...Object.values(context)),
+          ),
+        )
+      } catch (error) {
+        message.reply(String(error))
+      }
       return
     }
 
@@ -395,7 +411,8 @@ module.exports = async function onMessage(
       message.reply(
         `Team ${inTeamChannel} info\n\n` +
           `**Name:** ${teamName}\n` +
-          `**Description:** ${teamData.description || ':warning: (not set)'}\n` +
+          `**Description:** ${teamData.description ||
+            ':warning: (not set)'}\n` +
           `**URL:** ${teamData.url || ':warning: (not set)'}\n` +
           `**Video:** ${teamData.video || ':warning: (not set)'}`,
       )
