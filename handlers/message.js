@@ -316,7 +316,6 @@ module.exports = async function onMessage(
       }
       const newTeamName = command
         .replace(/^name\s+/i, '')
-        .replace()
         .trim()
         .slice(0, 64)
       await storeRef
@@ -327,6 +326,79 @@ module.exports = async function onMessage(
         `OK — ${inTeamChannel}’s name is now “${escapeMarkdown(newTeamName)}”`,
       )
       updateTeamList()
+      return
+    }
+
+    const setCurrentTeamData = (key, value) => {
+      if (!inTeamChannel) {
+        throw new Error('Not in team channel')
+      }
+      return storeRef
+        .child('teamData')
+        .child(inTeamChannel)
+        .child(key)
+        .set(value)
+    }
+
+    if (command.match(/^description /i)) {
+      if (!inTeamChannel) {
+        replyTeamChannelOnly('the `description` command')
+        return
+      }
+      const text = command.replace(/^description\s+/i, '').trim()
+      await setCurrentTeamData('description', text)
+      message.reply(
+        `OK — ${inTeamChannel}’s description has been saved. Say “@stupid info” to see team info.`,
+      )
+      return
+    }
+    if (command.match(/^url /i)) {
+      if (!inTeamChannel) {
+        replyTeamChannelOnly('the `url` command')
+        return
+      }
+      const text = command.replace(/^url\s+/i, '').trim()
+      await setCurrentTeamData('url', text)
+      message.reply(
+        `OK — ${inTeamChannel}’s url has been saved. Say “@stupid info” to see team info.`,
+      )
+      return
+    }
+    if (command.match(/^video /i)) {
+      if (!inTeamChannel) {
+        replyTeamChannelOnly('the `video` command')
+        return
+      }
+      const text = command.replace(/^video\s+/i, '').trim()
+      await setCurrentTeamData('video', text)
+      message.reply(
+        `OK — ${inTeamChannel}’s video URL has been saved. Say “@stupid info” to see team info.`,
+      )
+      return
+    }
+
+    if (command.toLowerCase() === 'info') {
+      if (!inTeamChannel) {
+        replyTeamChannelOnly('the `info` command')
+        return
+      }
+      const teamName =
+        (await storeRef
+          .child('teamNames')
+          .child(inTeamChannel)
+          .once('value')).val() || inTeamChannel
+      const teamData =
+        (await storeRef
+          .child('teamData')
+          .child(inTeamChannel)
+          .once('value')).val() || {}
+      message.reply(
+        `Team ${inTeamChannel} info\n\n` +
+          `**Name:** ${teamName}\n` +
+          `**Description:** ${teamData.description || ':warning: (not set)'}\n` +
+          `**URL:** ${teamData.url || ':warning: (not set)'}\n` +
+          `**Video:** ${teamData.video || ':warning: (not set)'}`,
+      )
       return
     }
 
