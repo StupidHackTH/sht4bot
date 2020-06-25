@@ -33,11 +33,17 @@ module.exports = async function onMessage(
     const teamRoles = [...guild.roles.cache.values()]
       .filter(r => /^team/.test(r.name))
       .sort((a, b) => (a.name < b.name ? -1 : 1))
+    const teamNames =
+      (await storeRef.child('teamNames').once('value')).val() || {}
     const newText =
       '**Team list**:\n' +
       teamRoles
         .map(r => {
-          return `・ ${r} — ${[...r.members.values()].join(' ')}`
+          const defaultName = r.name
+          const teamName = teamNames[r.name] || defaultName
+          const nameAppend =
+            teamName !== defaultName ? ` “${escapeMarkdown(teamName)}”` : ''
+          return `・ ${r}${nameAppend} — ${[...r.members.values()].join(' ')}`
         })
         .join('\n')
     await guild.channels
@@ -48,7 +54,8 @@ module.exports = async function onMessage(
       .then(m => m.edit(newText))
 
     const participantRole = guild.roles.resolve('721438879835619482')
-    const inTeam = m => teamRoles.some(t => [...m.roles.cache.values()].includes(t))
+    const inTeam = m =>
+      teamRoles.some(t => [...m.roles.cache.values()].includes(t))
     for (const p of [...participantRole.members.values()]) {
       const hasNoTeamRole = p.roles.cache.has('725382685245309008')
       if (!inTeam(p) && !hasNoTeamRole) {
@@ -130,7 +137,9 @@ module.exports = async function onMessage(
     }
 
     if (text === 'help') {
-      message.reply(`https://docs.google.com/spreadsheets/d/1oTRklEoz-eD2xJrfRK8TFH1GKh2zf0lxMCNYn1HJR4A/edit#gid=128723652`)
+      message.reply(
+        `https://docs.google.com/spreadsheets/d/1oTRklEoz-eD2xJrfRK8TFH1GKh2zf0lxMCNYn1HJR4A/edit#gid=128723652`,
+      )
       return
     }
 
@@ -171,6 +180,8 @@ module.exports = async function onMessage(
       message.reply('Please use this command in <#724181245134897202> only.')
     }
     const inTeamChannel = /^text\d\d$/.test(message.channel.name)
+      ? message.channel.name.replace(/text/, 'team')
+      : null
     const replyTeamChannelOnly = (thing = 'this command') => {
       message.reply(`Please use ${thing} in your team channel only.`)
       message.delete()
@@ -214,12 +225,16 @@ module.exports = async function onMessage(
         r.members.has(message.author.id),
       )
       if (existingTeamRoles.length > 1) {
-        const selectedTeam = existingTeamRoles.find(r => message.mentions.roles.has(r.id))
+        const selectedTeam = existingTeamRoles.find(r =>
+          message.mentions.roles.has(r.id),
+        )
         if (selectedTeam) {
           existingTeamRoles.length = 0
           existingTeamRoles[0] = selectedTeam
         } else {
-          message.reply('You are in multiple teams. Please tag the team you want to add the new members to.')
+          message.reply(
+            'You are in multiple teams. Please tag the team you want to add the new members to.',
+          )
           return
         }
       }
@@ -266,12 +281,16 @@ module.exports = async function onMessage(
         r.members.has(message.author.id),
       )
       if (alreadyInTeamRoles.length > 1) {
-        const selectedTeam = alreadyInTeamRoles.find(r => message.mentions.roles.has(r.id))
+        const selectedTeam = alreadyInTeamRoles.find(r =>
+          message.mentions.roles.has(r.id),
+        )
         if (selectedTeam) {
           alreadyInTeamRoles.length = 0
           alreadyInTeamRoles[0] = selectedTeam
         } else {
-          message.reply('You are in multiple teams. Please tag the team you want to leave.')
+          message.reply(
+            'You are in multiple teams. Please tag the team you want to leave.',
+          )
           return
         }
       }
@@ -289,18 +308,32 @@ module.exports = async function onMessage(
         return
       }
     }
-    
+
     if (command.match(/^name /i)) {
       if (!inTeamChannel) {
         replyTeamChannelOnly('the `name` command')
         return
       }
-      const name = command.replace(/^name\s+/i, '').replace().trim().slice(0, 64)
+      const newTeamName = command
+        .replace(/^name\s+/i, '')
+        .replace()
+        .trim()
+        .slice(0, 64)
+      await storeRef
+        .child('teamNames')
+        .child(inTeamChannel)
+        .set(newTeamName)
+      message.reply(
+        `OK — ${inTeamChannel}’s name is now “${escapeMarkdown(newTeamName)}”`,
+      )
+      updateTeamList()
       return
     }
-    
+
     if (command.toLowerCase() === 'help') {
-      message.reply(`https://docs.google.com/spreadsheets/d/1oTRklEoz-eD2xJrfRK8TFH1GKh2zf0lxMCNYn1HJR4A/edit#gid=128723652`)
+      message.reply(
+        `https://docs.google.com/spreadsheets/d/1oTRklEoz-eD2xJrfRK8TFH1GKh2zf0lxMCNYn1HJR4A/edit#gid=128723652`,
+      )
       return
     }
 
@@ -310,7 +343,7 @@ module.exports = async function onMessage(
 
 // https://stackoverflow.com/a/39543625/559913
 function escapeMarkdown(text) {
-  var unescaped = text.replace(/\\(\*|_|`|~|\\)/g, '$1'); // unescape any "backslashed" character
-  var escaped = unescaped.replace(/(\*|_|`|~|\\)/g, '\\$1'); // escape *, _, `, ~, \
-  return escaped;
+  var unescaped = text.replace(/\\(\*|_|`|~|\\)/g, '$1') // unescape any "backslashed" character
+  var escaped = unescaped.replace(/(\*|_|`|~|\\)/g, '\\$1') // escape *, _, `, ~, \
+  return escaped
 }
