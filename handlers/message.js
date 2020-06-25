@@ -166,11 +166,20 @@ module.exports = async function onMessage(
   if (text.match(/^<@!?724178986137026640>/)) {
     const command = text.replace(/^<@!?724178986137026640>/, '').trim()
     const member = message.member
-    if (!botSpamChannelIds.includes(message.channel.id)) {
+    const inBotSpam = botSpamChannelIds.includes(message.channel.id)
+    const replyBotSpamOnly = () => {
       message.reply('Please use this command in <#724181245134897202> only.')
-      return
+    }
+    const inTeamChannel = /^text\d\d$/.test(message.channel.name)
+    const replyTeamChannelOnly = (thing = 'this command') => {
+      message.reply(`Please use ${thing} in your team channel only.`)
+      message.delete()
     }
     if (command.match(/^add/i)) {
+      if (!inBotSpam) {
+        replyBotSpamOnly()
+        return
+      }
       const teamRoles = [...guild.roles.cache.values()].filter(r =>
         /^team/.test(r.name),
       )
@@ -246,6 +255,10 @@ module.exports = async function onMessage(
 
     // Leave team
     if (command.match(/^leave/i)) {
+      if (!inBotSpam) {
+        replyBotSpamOnly()
+        return
+      }
       const teamRoles = [...guild.roles.cache.values()].filter(r =>
         /^team/.test(r.name),
       )
@@ -277,6 +290,15 @@ module.exports = async function onMessage(
       }
     }
     
+    if (command.match(/^name /i)) {
+      if (!inTeamChannel) {
+        replyTeamChannelOnly('the `name` command')
+        return
+      }
+      const name = command.replace(/^name\s+/i, '').replace().trim().slice(0, 64)
+      return
+    }
+    
     if (command.toLowerCase() === 'help') {
       message.reply(`https://docs.google.com/spreadsheets/d/1oTRklEoz-eD2xJrfRK8TFH1GKh2zf0lxMCNYn1HJR4A/edit#gid=128723652`)
       return
@@ -284,4 +306,11 @@ module.exports = async function onMessage(
 
     message.reply('unknown command :pleading_face: -- try ‘help’')
   }
+}
+
+// https://stackoverflow.com/a/39543625/559913
+function escapeMarkdown(text) {
+  var unescaped = text.replace(/\\(\*|_|`|~|\\)/g, '$1'); // unescape any "backslashed" character
+  var escaped = unescaped.replace(/(\*|_|`|~|\\)/g, '\\$1'); // escape *, _, `, ~, \
+  return escaped;
 }
