@@ -143,7 +143,17 @@ module.exports = async function onMessage(
           `<strong>${teamName}</strong><small>${role.name} — ${members}</small>`,
         )
     },
-    async rollVideo(id) {},
+    async rollVideo(videoId) {
+      await firebase
+        .database()
+        .ref(`data/${process.env.LIVE_TENANT_ID}/layers/06-youtube`)
+        .update({
+          html: `<iframe class="inset-0 absolute w-full h-full"
+src="https://www.youtube.com/embed/${videoId}?autoplay=1"
+frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`,
+          activated: true,
+        })
+    },
   }
 
   // Direct messages
