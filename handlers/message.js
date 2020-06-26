@@ -110,9 +110,20 @@ module.exports = async function onMessage(
   const getTeamRoleByNumber = teamNumber =>
     teamRoles.find(r => +r.name.slice(4) === +teamNumber)
   const Stage = {
-    channel: guild.channels.resolve('726014801741873212')
-    invite(teamNumber) {
+    channel: guild.channels.resolve('726014801741873212'),
+    async invite(teamNumber) {
       const role = getTeamRoleByNumber(teamNumber)
+      await Stage.channel.createOverwrite(role, {
+        CONNECT: true,
+        SPEAK: true,
+      })
+    },
+    async uninvite() {
+      for (const [id, o] of Stage.channel.permissionOverwrites) {
+        if (teamRoles.find(r => r.id === id)) {
+          await o.delete()
+        }
+      }
     },
   }
 
