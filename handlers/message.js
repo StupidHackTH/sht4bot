@@ -146,14 +146,12 @@ module.exports = async function onMessage(
     async rollVideo(videoId) {
       await Promise.all([
         layersRef.child('06-youtube').update({
-          html: `<iframe class="inset-0 absolute w-full h-full"
-src="https://www.youtube.com/embed/${videoId}?autoplay=1"
-frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`,
+          html: `<iframe class="inset-0 absolute w-full h-full" src="/youtube?v=${videoId}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`,
           activated: true,
         }),
         layersRef.child('05-title').update({
-          'dataset/mode': 'small'
-        })
+          'dataset/mode': 'small',
+        }),
       ])
     },
   }
