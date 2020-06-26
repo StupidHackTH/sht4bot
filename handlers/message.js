@@ -1,4 +1,5 @@
 const axios = require('axios')
+const _ = require('lodash')
 
 module.exports = async function onMessage(
   message,
@@ -129,10 +130,18 @@ module.exports = async function onMessage(
     async showTeam(teamNumber) {
       const role = getTeamRoleByNumber(teamNumber)
       const teamNames = await getTeamNames()
-      const teamName = teamNames[role.name] || role.name
-      await firebase.database
+      const teamName = _.escape(teamNames[role.name] || role.name)
+      const members = [...role.members.values()]
+        .map(
+          r => '<span style="opacity:0.64">@</span>' + _.escape(r.displayName),
+        )
+        .join(' ')
+      await firebase
+        .database()
         .ref(`data/${process.env.LIVE_TENANT_ID}/layers/08-nowshowing/html`)
-        .set(`<strong>${teamName}</strong>`)
+        .set(
+          `<strong>${teamName}</strong><small>${role.name} — ${members}</small>`,
+        )
     },
     async rollVideo(id) {},
   }
