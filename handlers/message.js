@@ -28,32 +28,13 @@ module.exports = async function onMessage(
     .child('ticket')
   const authenticated = (await userTicketRef.once('value')).exists()
   const participantRole = guild.roles.resolve('721438879835619482')
+  const teamRoles = [...guild.roles.cache.values()]
+    .filter(r => /^team/.test(r.name))
+    .sort((a, b) => (a.name < b.name ? -1 : 1))
 
   const updateTeamList = async () => {
-    const teamRoles = [...guild.roles.cache.values()]
-      .filter(r => /^team/.test(r.name))
-      .sort((a, b) => (a.name < b.name ? -1 : 1))
     const teamNames =
       (await storeRef.child('teamNames').once('value')).val() || {}
-    // const newText =
-    //   '**Team list**:\n' +
-    //   teamRoles
-    //     .map(r => {
-    //       const defaultName = r.name
-    //       const teamName = teamNames[r.name] || defaultName
-    //       const nameAppend =
-    //         teamName !== defaultName ? ` “${escapeMarkdown(teamName)}”` : ''
-    //       return `・ ${r}${nameAppend} — ${[...r.members.values()].join(' ')}`
-    //     })
-    //     .join('\n')
-    // console.log(newText.length)
-    // await guild.channels
-    //   // #status
-    //   .resolve('725234327457234956')
-    //   // message id
-    //   .messages.fetch('725234822531907594')
-    //   .then(m => m.edit(newText))
-
     const teamMsgIds = [
       '726025997815906366',
       '726025998604435486',
@@ -126,6 +107,15 @@ module.exports = async function onMessage(
     }
   }
 
+  const getTeamRoleByNumber = teamNumber =>
+    teamRoles.find(r => +r.name.slice(4) === +teamNumber)
+  const Stage = {
+    channel: guild.channels.resolve('726014801741873212')
+    invite(teamNumber) {
+      const role = getTeamRoleByNumber(teamNumber)
+    },
+  }
+
   // Direct messages
   if (!message.guild) {
     const member = guild.members.resolve(message.author.id)
@@ -149,6 +139,7 @@ module.exports = async function onMessage(
         storeRef,
         guild,
         updateTeamList,
+        Stage,
       }
       try {
         message.reply(
@@ -181,9 +172,6 @@ module.exports = async function onMessage(
     }
 
     if (text.toLowerCase() === 'submit') {
-      const teamRoles = [...guild.roles.cache.values()].filter(r =>
-        /^team/.test(r.name),
-      )
       const alreadyInTeamRoles = teamRoles.filter(r =>
         r.members.has(message.author.id),
       )
@@ -280,9 +268,6 @@ module.exports = async function onMessage(
         replyBotSpamOnly()
         return
       }
-      const teamRoles = [...guild.roles.cache.values()].filter(r =>
-        /^team/.test(r.name),
-      )
       const allParticipants = [...participantRole.members.values()]
       const mentionedParticipants = allParticipants.filter(m => {
         return message.mentions.users.has(m.id) // && m.id !== message.author.id
@@ -363,9 +348,6 @@ module.exports = async function onMessage(
         replyBotSpamOnly()
         return
       }
-      const teamRoles = [...guild.roles.cache.values()].filter(r =>
-        /^team/.test(r.name),
-      )
       const alreadyInTeamRoles = teamRoles.filter(r =>
         r.members.has(message.author.id),
       )
