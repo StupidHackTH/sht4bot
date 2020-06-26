@@ -46,6 +46,7 @@ module.exports = async function onMessage(
           return `・ ${r}${nameAppend} — ${[...r.members.values()].join(' ')}`
         })
         .join('\n')
+    console.log(newText.length)
     await guild.channels
       // #status
       .resolve('725234327457234956')
