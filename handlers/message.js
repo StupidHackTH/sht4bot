@@ -31,10 +31,11 @@ module.exports = async function onMessage(
   const teamRoles = [...guild.roles.cache.values()]
     .filter(r => /^team/.test(r.name))
     .sort((a, b) => (a.name < b.name ? -1 : 1))
+  const getTeamNames = async () =>
+    (await storeRef.child('teamNames').once('value')).val() || {}
 
   const updateTeamList = async () => {
-    const teamNames =
-      (await storeRef.child('teamNames').once('value')).val() || {}
+    const teamNames = await getTeamNames()
     const teamMsgIds = [
       '726025997815906366',
       '726025998604435486',
@@ -125,6 +126,15 @@ module.exports = async function onMessage(
         }
       }
     },
+    async showTeam(teamNumber) {
+      const role = getTeamRoleByNumber(teamNumber)
+      const teamNames = await getTeamNames()
+      const teamName = teamNames[role.name] || role.name
+      await firebase.database
+        .ref(`data/${process.env.LIVE_TENANT_ID}/layers/08-nowshowing/html`)
+        .set(`<strong>${teamName}</strong>`)
+    },
+    async rollVideo(id) {},
   }
 
   // Direct messages
