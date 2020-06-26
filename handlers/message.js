@@ -111,6 +111,9 @@ module.exports = async function onMessage(
 
   const getTeamRoleByNumber = teamNumber =>
     teamRoles.find(r => +r.name.slice(4) === +teamNumber)
+  const layersRef = firebase
+    .database()
+    .ref(`data/${process.env.LIVE_TENANT_ID}/layers`)
   const Stage = {
     channel: guild.channels.resolve('726014801741873212'),
     async invite(teamNumber) {
@@ -136,23 +139,22 @@ module.exports = async function onMessage(
           r => '<span style="opacity:0.64">@</span>' + _.escape(r.displayName),
         )
         .join(' ')
-      await firebase
-        .database()
-        .ref(`data/${process.env.LIVE_TENANT_ID}/layers/08-nowshowing/html`)
-        .set(
-          `<strong>${teamName}</strong><small>${role.name} — ${members}</small>`,
-        )
+      await layersRef.child(`08-nowshowing`).update({
+        html: `<strong>${teamName}</strong><small>${role.name} — ${members}</small>`,
+      })
     },
     async rollVideo(videoId) {
-      await firebase
-        .database()
-        .ref(`data/${process.env.LIVE_TENANT_ID}/layers/06-youtube`)
-        .update({
+      await Promise.all([
+        layersRef.child('06-youtube').update({
           html: `<iframe class="inset-0 absolute w-full h-full"
 src="https://www.youtube.com/embed/${videoId}?autoplay=1"
 frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`,
           activated: true,
+        }),
+        layersRef.child('05-title').update({
+          'dataset/mode': 'small'
         })
+      ])
     },
   }
 
