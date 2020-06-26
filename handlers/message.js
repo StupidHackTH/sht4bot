@@ -418,7 +418,7 @@ module.exports = async function onMessage(
       return
     }
 
-    const replyDeprecatedSubmissionCommand = (thing) => {
+    const replyDeprecatedSubmissionCommand = thing => {
       message.reply(
         `Sorry, ${thing} is deprecated. Please access the submission form by sending a DM to <@!724178986137026640> saying “submit”`,
       )
@@ -438,9 +438,8 @@ module.exports = async function onMessage(
     }
     if (command.match(/^submit/i)) {
       message.reply(
-        `Sorry, ${thing} is deprecated. Please access the submission form by sending a DM to <@!724178986137026640> saying “submit”`,
+        `To submit, please send a DM saying “submit” to me, <@!724178986137026640>.`,
       )
-      message.delete()
       return
     }
     if (command.toLowerCase() === 'info') {
