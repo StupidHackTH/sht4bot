@@ -180,6 +180,31 @@ module.exports = async function onMessage(
       return
     }
 
+    if (text.toLowerCase() === 'submit') {
+      const teamRoles = [...guild.roles.cache.values()].filter(r =>
+        /^team/.test(r.name),
+      )
+      const alreadyInTeamRoles = teamRoles.filter(r =>
+        r.members.has(message.author.id),
+      )
+      if (alreadyInTeamRoles.length === 0) {
+        message.reply('This command requires you to be inside a team, sorry…')
+        return
+      }
+      for (const r of alreadyInTeamRoles) {
+        message.reply(
+          'Submit form for **' +
+            r.name +
+            '** — https://stupidhackth.github.io/4/submit.html#tn=' +
+            (await storeRef
+              .child('dataTenants')
+              .child(r.name)
+              .once('value')).val(),
+        )
+      }
+      return
+    }
+
     // Authentication
     if (text.match(/^[a-z0-9]{6}$/i)) {
       const ticketCodeRef = storeRef.child('tickets').child(text.toUpperCase())
@@ -393,80 +418,35 @@ module.exports = async function onMessage(
       return
     }
 
-    const setCurrentTeamData = (key, value) => {
-      if (!inTeamChannel) {
-        throw new Error('Not in team channel')
-      }
-      return storeRef
-        .child('teamData')
-        .child(inTeamChannel)
-        .child(key)
-        .set(value)
-    }
-
-    if (command.match(/^description /i)) {
-      if (!inTeamChannel) {
-        replyTeamChannelOnly('the `description` command')
-        return
-      }
-      const text = command.replace(/^description\s+/i, '').trim()
-      await setCurrentTeamData('description', text)
+    const replyDeprecatedSubmissionCommand = (thing) => {
       message.reply(
-        `OK — ${inTeamChannel}’s description has been saved. Say “@stupid info” to see team info.`,
+        `Sorry, ${thing} is deprecated. Please access the submission form by sending a DM to <@!724178986137026640> saying “submit”`,
       )
+      message.delete()
+    }
+    if (command.match(/^description /i)) {
+      replyDeprecatedSubmissionCommand('the `description` command')
       return
     }
     if (command.match(/^url /i)) {
-      if (!inTeamChannel) {
-        replyTeamChannelOnly('the `url` command')
-        return
-      }
-      const text = command.replace(/^url\s+/i, '').trim()
-      await setCurrentTeamData('url', text)
-      message.reply(
-        `OK — ${inTeamChannel}’s url has been saved. Say “@stupid info” to see team info.`,
-      )
+      replyDeprecatedSubmissionCommand('the `url` command')
       return
     }
     if (command.match(/^video /i)) {
-      if (!inTeamChannel) {
-        replyTeamChannelOnly('the `video` command')
-        return
-      }
-      const text = command.replace(/^video\s+/i, '').trim()
-      await setCurrentTeamData('video', text)
-      message.reply(
-        `OK — ${inTeamChannel}’s video URL has been saved. Say “@stupid info” to see team info.`,
-      )
+      replyDeprecatedSubmissionCommand('the `video` command')
       return
     }
-
+    if (command.match(/^submit/i)) {
+      message.reply(
+        `Sorry, ${thing} is deprecated. Please access the submission form by sending a DM to <@!724178986137026640> saying “submit”`,
+      )
+      message.delete()
+      return
+    }
     if (command.toLowerCase() === 'info') {
-      if (!inTeamChannel) {
-        replyTeamChannelOnly('the `info` command')
-        return
-      }
-      const teamName =
-        (await storeRef
-          .child('teamNames')
-          .child(inTeamChannel)
-          .once('value')).val() || inTeamChannel
-      const teamData =
-        (await storeRef
-          .child('teamData')
-          .child(inTeamChannel)
-          .once('value')).val() || {}
-      message.reply(
-        `Team ${inTeamChannel} info\n\n` +
-          `**Name:** ${teamName}\n` +
-          `**Description:** ${teamData.description ||
-            ':warning: (not set)'}\n` +
-          `**URL:** ${teamData.url || ':warning: (not set)'}\n` +
-          `**Video:** ${teamData.video || ':warning: (not set)'}`,
-      )
+      replyDeprecatedSubmissionCommand('the `info` command')
       return
     }
-
     if (command.toLowerCase() === 'help') {
       message.reply(
         `https://docs.google.com/spreadsheets/d/1oTRklEoz-eD2xJrfRK8TFH1GKh2zf0lxMCNYn1HJR4A/edit#gid=128723652`,
