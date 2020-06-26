@@ -35,27 +35,74 @@ module.exports = async function onMessage(
       .sort((a, b) => (a.name < b.name ? -1 : 1))
     const teamNames =
       (await storeRef.child('teamNames').once('value')).val() || {}
-    const newText =
-      '**Team list**:\n' +
-      teamRoles
-        .map(r => {
-          const defaultName = r.name
-          const teamName = teamNames[r.name] || defaultName
-          const nameAppend =
-            teamName !== defaultName ? ` “${escapeMarkdown(teamName)}”` : ''
-          return `・ ${r}${nameAppend} — ${[...r.members.values()].join(' ')}`
-        })
-        .join('\n')
-    console.log(newText.length)
-    await guild.channels
-      // #status
-      .resolve('725234327457234956')
-      // message id
-      .messages.fetch('725234822531907594')
-      .then(m => m.edit(newText))
+    // const newText =
+    //   '**Team list**:\n' +
+    //   teamRoles
+    //     .map(r => {
+    //       const defaultName = r.name
+    //       const teamName = teamNames[r.name] || defaultName
+    //       const nameAppend =
+    //         teamName !== defaultName ? ` “${escapeMarkdown(teamName)}”` : ''
+    //       return `・ ${r}${nameAppend} — ${[...r.members.values()].join(' ')}`
+    //     })
+    //     .join('\n')
+    // console.log(newText.length)
+    // await guild.channels
+    //   // #status
+    //   .resolve('725234327457234956')
+    //   // message id
+    //   .messages.fetch('725234822531907594')
+    //   .then(m => m.edit(newText))
 
-    const teamCategories = [...guild.channels.cache.values()]
-      .filter(c => c.type === 'category' && c.name.match(/^team/))
+    const teamMsgIds = [
+      '726025997815906366',
+      '726025998604435486',
+      '726025999011020801',
+      '726025999531114606',
+      '726025999971516528',
+      '726026023828848660',
+      '726026024302805012',
+      '726026024906653807',
+      '726026025351249990',
+      '726026025695182848',
+      '726026049208582164',
+      '726026049531543592',
+      '726026049984397372',
+      '726026050437513236',
+      '726026051624501249',
+      '726026079529205820',
+      '726026079839453264',
+      '726026080200163398',
+      '726026080259145759',
+      '726026080997343243',
+      '726026108881076285',
+      '726026109401038968',
+      '726026109728194670',
+      '726026110088904727',
+    ]
+    const statusChannel = guild.channels.resolve('725234327457234956')
+    statusChannel.messages
+      .fetch('725234822531907594')
+      .then(m => m.edit('**Team list:**'))
+    for (const [i, r] of teamRoles.entries()) {
+      const defaultName = r.name
+      const teamName = teamNames[r.name] || defaultName
+      const nameAppend =
+        teamName !== defaultName ? ` “${escapeMarkdown(teamName)}”` : ''
+      const newText = `・ ${r}${nameAppend} — ${[...r.members.values()].join(
+        ' ',
+      )}`.trim()
+      statusChannel.messages.fetch(teamMsgIds[i]).then(m => {
+        if (m.content !== newText) {
+          console.log('diff', m.content, '=>', newText)
+          return m.edit(newText)
+        }
+      })
+    }
+
+    const teamCategories = [...guild.channels.cache.values()].filter(
+      c => c.type === 'category' && c.name.match(/^team/),
+    )
     for (const teamCategory of teamCategories) {
       const defaultName = teamCategory.name.substr(0, 6)
       const teamName = teamNames[defaultName] || defaultName
