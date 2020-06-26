@@ -149,9 +149,8 @@ module.exports = async function onMessage(
           html: `<iframe class="inset-0 absolute w-full h-full" src="/youtube?v=${videoId}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`,
           activated: true,
         }),
-        layersRef.child('05-title').update({
-          'dataset/mode': 'small',
-        }),
+        layersRef.child('05-title').update({ 'dataset/mode': 'small' }),
+        layersRef.child('04-meet').update({ 'dataset/mode': 'hide' }),
       ])
     },
   }
