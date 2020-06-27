@@ -388,6 +388,7 @@ module.exports = async function onMessage(
   if (backstageChannels.includes(message.channel.id)) {
     let inviteChannel = '721429288515010563' // hall-chat
     // inviteChannel = '726015230567776337' // backstage
+    inviteChannel = '726419216839999498'
     try {
       // next - invite up stage
       {
