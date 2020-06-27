@@ -141,6 +141,7 @@ module.exports = async function onMessage(
         .join(' ')
       await layersRef.child(upNext ? '08-upnext' : '08-nowshowing').update({
         html: `<strong>${teamName}</strong><small>${role.name} — ${members}</small>`,
+        ...(upNext ? { 'dataset/mode': 'show' } : {}),
       })
     },
     async rollVideo(videoId) {
@@ -160,7 +161,12 @@ module.exports = async function onMessage(
       const role = getTeamRoleByNumber(teamNumber)
       const teamNames = await getTeamNames()
       const teamName = teamNames[role.name] || role.name
-      const existingData = await storeRef.child('ratings').child(role.name)
+      const existingData = await storeRef
+        .child('ratings')
+        .child(role.name)
+        .child('votes')
+        .once('value')
+        .then(s => s.val())
       await audienceApp
         .database()
         .ref(`sht4`)
@@ -168,6 +174,11 @@ module.exports = async function onMessage(
           currentTeam: role.name,
           teamName: teamName,
         })
+      await audienceApp
+        .database()
+        .ref(`sht4`)
+        .child('votes')
+        .set(existingData)
     },
     async saveRatingData() {
       const data = (await audienceApp
@@ -322,7 +333,12 @@ module.exports = async function onMessage(
           await Stage.uninvite()
           await Stage.invite(n)
           await Stage.showTeam(n, true)
-          await guild.channels.resolve(inviteChannel).send(`${getTeamRoleByNumber(n)}, please come up on stage (**stage** voice channel)! Please mute the YouTube video while on stage.`)
+          const teamRole = getTeamRoleByNumber(n)
+          await guild.channels
+            .resolve(inviteChannel)
+            .send(
+              `${teamRole}, please come up on stage (**stage** voice channel)! Please mute the YouTube video while on stage.`,
+            )
           message.reply('Invited')
           return
         }
@@ -333,8 +349,33 @@ module.exports = async function onMessage(
         if (m) {
           const n = +m[1]
           await Stage.showTeam(n, false)
-          await Stage.rollVideo(id)
-          message.reply('Rolling video!')
+          const teamRole = getTeamRoleByNumber(n)
+          const tenantId = await storeRef
+            .child('dataTenants')
+            .child(teamRole.name)
+            .once('value')
+            .then(s => s.val())
+          const videoId = await firebase
+            .database()
+            .ref(`/data/${tenantId}`)
+            .child('youtube')
+            .once('value')
+            .then(s => s.val())
+          if (!videoId) {
+            message.reply('No video!')
+            return
+          }
+          await Stage.rollVideo(videoId)
+          message.reply('Rolling video! https://youtu.be/' + videoId)
+          setTimeout(async () => {
+            try {
+              await Stage.saveRatingData()
+              await Stage.beginRatingOnTeam(n)
+            } catch (error) {
+              console.log(error)
+              message.reply(`${error}`)
+            }
+          }, 15e3)
           return
         }
       }
