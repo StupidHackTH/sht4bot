@@ -130,7 +130,7 @@ module.exports = async function onMessage(
         }
       }
     },
-    async showTeam(teamNumber) {
+    async showTeam(teamNumber, upNext=false) {
       const role = getTeamRoleByNumber(teamNumber)
       const teamNames = await getTeamNames()
       const teamName = _.escape(teamNames[role.name] || role.name)
@@ -139,7 +139,7 @@ module.exports = async function onMessage(
           r => '<span style="opacity:0.64">@</span>' + _.escape(r.displayName),
         )
         .join(' ')
-      await layersRef.child(`08-nowshowing`).update({
+      await layersRef.child(upNext ? '08-upnext' : '08-nowshowing').update({
         html: `<strong>${teamName}</strong><small>${role.name} — ${members}</small>`,
       })
     },
@@ -151,7 +151,9 @@ module.exports = async function onMessage(
         }),
         layersRef.child('07-title').update({ 'dataset/mode': 'small' }),
         layersRef.child('08-nowshowing').update({ 'dataset/mode': 'small' }),
+        layersRef.child('08-upnext').update({ 'dataset/mode': 'hide' }),
         layersRef.child('04-meet').update({ 'dataset/mode': 'hide' }),
+        layersRef.child('09-voteplease').update({ 'dataset/mode': 'show' }),
       ])
     },
     async beginRatingOnTeam(teamNumber) {
