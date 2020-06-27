@@ -26,6 +26,9 @@ const audienceApp = firebase.initializeApp(
   },
   'audienceApp',
 )
+audienceApp.auth().signInWithEmailAndPassword(...process.env.AUDIENCE_APP_CREDENTIALS.split(':')).then(() => {
+  console.log('Authence app authenticated as', audienceApp.auth().currentUser.uid)
+})
 
 const storeRef = firebase
   .database()

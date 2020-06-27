@@ -3,7 +3,7 @@ const _ = require('lodash')
 
 module.exports = async function onMessage(
   message,
-  { client, firebase, storeRef },
+  { client, firebase, storeRef, audienceApp },
 ) {
   const guild = client.guilds.resolve('721429287999111189')
   if (message.author.bot) {
@@ -154,6 +154,20 @@ module.exports = async function onMessage(
         layersRef.child('04-meet').update({ 'dataset/mode': 'hide' }),
       ])
     },
+    async beginRatingOnTeam(teamNumber) {
+      const role = getTeamRoleByNumber(teamNumber)
+      const teamNames = await getTeamNames()
+      const teamName = teamNames[role.name] || role.name
+      await audienceApp.database().ref(`sht4`).set({
+        currentTeam: role.name,
+        teamName: teamName,
+      })
+    },
+    async saveRatingData() {
+      const data = (await audienceApp.database().ref('sht4').once('value')).val()
+      const team = data.currentTeam
+      await storeRef.child('ratings').child(team).set(data)
+    }
   }
 
   // Direct messages
@@ -180,6 +194,7 @@ module.exports = async function onMessage(
         guild,
         updateTeamList,
         Stage,
+        audienceApp,
       }
       try {
         message.reply(
