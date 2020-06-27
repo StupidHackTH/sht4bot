@@ -16,8 +16,9 @@ module.exports = async function onMessage(
   console.log(
     `[${new Date().toJSON()}] ${message.author.tag} ${JSON.stringify(text)}`,
   )
-  
-  const REG_END_MESSAGE = 'Team registration system has been closed. To add/remove members from your team, please contact @organizer.'
+
+  const REG_END_MESSAGE =
+    'Team registration system has been closed. To add/remove members from your team, please contact @organizer.'
 
   const adminIds = [
     // flicknote
@@ -159,6 +160,14 @@ module.exports = async function onMessage(
         layersRef.child('09-voteplease').update({ 'dataset/mode': 'show' }),
       ])
     },
+    async showText(text) {
+      await Promise.all([
+        layersRef.child('10-text-display').update({
+          html: `${text}`,
+          activated: !!text,
+        }),
+      ])
+    },
     async beginRatingOnTeam(teamNumber) {
       const role = getTeamRoleByNumber(teamNumber)
       const teamNames = await getTeamNames()
@@ -292,7 +301,9 @@ module.exports = async function onMessage(
         .child('prizeClaims')
         .once('value')
         .then(s => s.val() || {})
-      const alreadyClaimed = Object.keys(claimed).filter(k => claimed[k] === member.id)
+      const alreadyClaimed = Object.keys(claimed).filter(
+        k => claimed[k] === member.id,
+      )
       const available = Object.keys(availablePrizes).filter(k => !claimed[k])
       const prizeKey = 'p' + text.toLowerCase()
       if (alreadyClaimed.length > 0 && alreadyClaimed[0] !== prizeKey) {
@@ -301,7 +312,10 @@ module.exports = async function onMessage(
       }
       const availableNumbers = available.map(k => k.slice(1)).join(', ')
       if (!availablePrizes[prizeKey]) {
-        message.reply('Sorry, this prize number is not available. Available prizes are: ' + availableNumbers)
+        message.reply(
+          'Sorry, this prize number is not available. Available prizes are: ' +
+            availableNumbers,
+        )
         return
       }
       const claimResult = await storeRef
@@ -312,7 +326,9 @@ module.exports = async function onMessage(
         })
       const result = claimResult.snapshot.val()
       if (result !== member.id) {
-        message.reply(`Sorry, someone else already claimed that prize! Available prizes are: ${availableNumbers}`)
+        message.reply(
+          `Sorry, someone else already claimed that prize! Available prizes are: ${availableNumbers}`,
+        )
         return
       }
       message.reply(`Prize claiming successful!`)
@@ -375,7 +391,7 @@ module.exports = async function onMessage(
     try {
       // next - invite up stage
       {
-        const m = text.match(/^n (\d+)/)
+        const m = text.match(/^next (\d+)/)
         if (m) {
           const n = +m[1]
           await Stage.uninvite()
@@ -391,9 +407,9 @@ module.exports = async function onMessage(
           return
         }
       }
-      // next - roll video
+      // roll - roll video
       {
-        const m = text.match(/^r (\d+)/)
+        const m = text.match(/^roll (\d+)/)
         if (m) {
           const n = +m[1]
           await Stage.showTeam(n, false)
@@ -424,6 +440,16 @@ module.exports = async function onMessage(
               message.reply(`${error}`)
             }
           }, 15e3)
+          return
+        }
+      }
+
+      // say - display text
+      {
+        const m = text.match(/^show/)
+        if (m) {
+          await Stage.showText(text.substr(4).trim())
+          message.reply('ok')
           return
         }
       }
