@@ -130,7 +130,7 @@ module.exports = async function onMessage(
         }
       }
     },
-    async showTeam(teamNumber, upNext=false) {
+    async showTeam(teamNumber, upNext = false) {
       const role = getTeamRoleByNumber(teamNumber)
       const teamNames = await getTeamNames()
       const teamName = _.escape(teamNames[role.name] || role.name)
@@ -161,16 +161,25 @@ module.exports = async function onMessage(
       const teamNames = await getTeamNames()
       const teamName = teamNames[role.name] || role.name
       const existingData = await storeRef.child('ratings').child(role.name)
-      await audienceApp.database().ref(`sht4`).update({
-        currentTeam: role.name,
-        teamName: teamName,
-      })
+      await audienceApp
+        .database()
+        .ref(`sht4`)
+        .update({
+          currentTeam: role.name,
+          teamName: teamName,
+        })
     },
     async saveRatingData() {
-      const data = (await audienceApp.database().ref('sht4').once('value')).val()
+      const data = (await audienceApp
+        .database()
+        .ref('sht4')
+        .once('value')).val()
       const team = data.currentTeam
-      await storeRef.child('ratings').child(team).set(data)
-    }
+      await storeRef
+        .child('ratings')
+        .child(team)
+        .set(data)
+    },
   }
 
   // Direct messages
@@ -300,15 +309,40 @@ module.exports = async function onMessage(
     })
   }
 
-  const backstageChannels = [
-    '726015230567776337'
-  ]
+  const backstageChannels = ['726015230567776337']
   if (backstageChannels.includes(message.channel.id)) {
-    {
-      co
+    let inviteChannel = '721429288515010563' // hall-chat
+    inviteChannel = '726015230567776337' // backstage
+    try {
+      // next - invite up stage
+      {
+        const m = text.match(/^n (\d+)/)
+        if (m) {
+          const n = +m[1]
+          await Stage.uninvite()
+          await Stage.invite(n)
+          await Stage.showTeam(n, true)
+          await guild.channels.resolve(inviteChannel).send(`${getTeamRoleByNumber(n)}, please come up on stage (**stage** voice channel)! Please mute the YouTube video while on stage.`)
+          message.reply('Invited')
+          return
+        }
+      }
+      // next - roll video
+      {
+        const m = text.match(/^r (\d+)/)
+        if (m) {
+          const n = +m[1]
+          await Stage.showTeam(n, false)
+          await Stage.rollVideo(id)
+          message.reply('Rolling video!')
+          return
+        }
+      }
+    } catch (error) {
+      console.log(error)
+      message.reply(`${error}`)
     }
   }
-
 
   // check mention
   const botSpamChannelIds = [
