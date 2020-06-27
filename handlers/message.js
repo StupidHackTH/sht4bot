@@ -331,7 +331,13 @@ module.exports = async function onMessage(
         )
         return
       }
-      message.reply(`Prize claiming successful!`)
+      message.reply(`Prize claiming successful! — You got`)
+      setTimeout(() => {
+        message.reply('…')
+      }, 5000)
+      setTimeout(() => {
+        message.reply(availablePrizes[prizeKey].title + ' !!!!!')
+      }, 10000)
       return
     }
 
