@@ -287,6 +287,7 @@ module.exports = async function onMessage(
     if (text.match(/^\d{1,2}$/)) {
       // awardee
       if (!member.roles.cache.has('726361729554055169')) {
+        console.log('>>>> not awardee', member.displayName)
         message.reply(
           'Sorry, only prize awardees can claim prizes. ' +
             'However, we have free swags for everyone!',
@@ -307,13 +308,15 @@ module.exports = async function onMessage(
       const available = Object.keys(availablePrizes).filter(k => !claimed[k])
       const prizeKey = 'p' + text.toLowerCase()
       if (alreadyClaimed.length > 0 && alreadyClaimed[0] !== prizeKey) {
+        console.log('>>>> already claim', member.displayName)
         message.reply('Sorry, you already claimed another prize.')
         return
       }
       const availableNumbers = available.map(k => k.slice(1)).join(', ')
       if (!availablePrizes[prizeKey]) {
+        console.log('>>>> not valid', member.displayName, availableNumbers)
         message.reply(
-          'Sorry, this prize number is not available. Available prizes are: ' +
+          'Sorry, this prize number is not valid. Available prizes are: ' +
             availableNumbers,
         )
         return
@@ -326,17 +329,25 @@ module.exports = async function onMessage(
         })
       const result = claimResult.snapshot.val()
       if (result !== member.id) {
+        console.log('>>>> already taken', member.displayName, availableNumbers)
         message.reply(
           `Sorry, someone else already claimed that prize! Available prizes are: ${availableNumbers}`,
         )
         return
       }
-      message.reply(`Prize claiming successful! — You got`)
+      console.log(
+        '>>>> award',
+        member.displayName,
+        availablePrizes[prizeKey].code,
+        availablePrizes[prizeKey].title,
+        availableNumbers,
+      )
+      message.reply(`Prize claiming successful! — You got…`)
       setTimeout(() => {
-        message.reply('…')
+        message.reply('……')
       }, 5000)
       setTimeout(() => {
-        message.reply(availablePrizes[prizeKey].title + ' !!!!!')
+        message.reply('**' + availablePrizes[prizeKey].title.trim() + '**!!')
       }, 10000)
       return
     }
