@@ -282,7 +282,37 @@ module.exports = async function onMessage(
         )
         return
       }
-      message.reply('clam')
+      const availablePrizes = await storeRef
+        .child('availablePrizes')
+        .once('value')
+        .then(s => s.val() || {})
+      const claimed = await storeRef
+        .child('prizeClaims')
+        .once('value')
+        .then(s => s.val() || {})
+      const alreadyClaimed = Object.keys(claimed).filter(k => claimed[k] === member.id)
+      const available = Object.keys(availablePrizes).filter(k => !claimed[k])
+      const prizeKey = 'p' + text.toLowerCase()
+      if (alreadyClaimed.length > 0 && alreadyClaimed[0] !== prizeKey) {
+        message.reply('Sorry, you already claimed a prize.')
+        return
+      }
+      if (!availablePrizes[prizeKey]) {
+        message.reply('Sorry, this prize number is not available. Available prizes are: ' + available.join(', '))
+        return
+      }
+      const claimResult = await storeRef
+        .child('prizeClaims')
+        .child(prizeKey)
+        .transaction(v => {
+          return v || member.id
+        })
+      const result = claimResult.snapshot.val()
+      if (result !== member.id) {
+        message.reply(`Sorry, someone else already claimed that prize! Available prizes are: ${available.join(', ')}`)
+        return
+      }
+      message.reply(`Prize claiming successful!`)
       return
     }
 
