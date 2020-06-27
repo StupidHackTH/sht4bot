@@ -12,11 +12,25 @@ var firebaseConfig = {
   messagingSenderId: '1047007358320',
   appId: '1:1047007358320:web:8c697b8a6f26ee9852f3b5',
 }
-
 firebase.initializeApp(firebaseConfig)
 
-const storeRef = firebase.database().ref(`data/${process.env.DATASTORE_TENANT_ID}`)
-storeRef.on('value', (store) => {
+const audienceApp = firebase.initializeApp(
+  {
+    apiKey: 'AIzaSyCRRP6g0vMhR194iGM9pzDQ-C17cSGPOjo',
+    authDomain: 'the-stupid-hackathon-thailand.firebaseapp.com',
+    databaseURL: 'https://the-stupid-hackathon-thailand.firebaseio.com',
+    projectId: 'the-stupid-hackathon-thailand',
+    storageBucket: 'the-stupid-hackathon-thailand.appspot.com',
+    messagingSenderId: '973484319476',
+    appId: '1:973484319476:web:a4e0a8bc80cfe5f86d74a1',
+  },
+  'audienceApp',
+)
+
+const storeRef = firebase
+  .database()
+  .ref(`data/${process.env.DATASTORE_TENANT_ID}`)
+storeRef.on('value', store => {
   console.log('Data store updated', new Date())
 })
 
@@ -28,7 +42,7 @@ client.on('message', async msg => {
   try {
     const id = require.resolve('./handlers/message')
     delete require.cache[id]
-    await require(id)(msg, { client, firebase, storeRef })
+    await require(id)(msg, { client, firebase, storeRef, audienceApp })
   } catch (error) {
     console.error(
       'Cannot process message',
