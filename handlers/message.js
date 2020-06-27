@@ -300,6 +300,16 @@ module.exports = async function onMessage(
     })
   }
 
+  const backstageChannels = [
+    '726015230567776337'
+  ]
+  if (backstageChannels.includes(message.channel.id)) {
+    {
+      co
+    }
+  }
+
+
   // check mention
   const botSpamChannelIds = [
     // staging
