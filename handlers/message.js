@@ -294,11 +294,12 @@ module.exports = async function onMessage(
       const available = Object.keys(availablePrizes).filter(k => !claimed[k])
       const prizeKey = 'p' + text.toLowerCase()
       if (alreadyClaimed.length > 0 && alreadyClaimed[0] !== prizeKey) {
-        message.reply('Sorry, you already claimed a prize.')
+        message.reply('Sorry, you already claimed another prize.')
         return
       }
+      const availableNumbers = available.map(k => k.slice(1)).join(', ')
       if (!availablePrizes[prizeKey]) {
-        message.reply('Sorry, this prize number is not available. Available prizes are: ' + available.join(', '))
+        message.reply('Sorry, this prize number is not available. Available prizes are: ' + availableNumbers)
         return
       }
       const claimResult = await storeRef
@@ -309,7 +310,7 @@ module.exports = async function onMessage(
         })
       const result = claimResult.snapshot.val()
       if (result !== member.id) {
-        message.reply(`Sorry, someone else already claimed that prize! Available prizes are: ${available.join(', ')}`)
+        message.reply(`Sorry, someone else already claimed that prize! Available prizes are: ${availableNumbers}`)
         return
       }
       message.reply(`Prize claiming successful!`)
