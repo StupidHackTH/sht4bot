@@ -16,6 +16,8 @@ module.exports = async function onMessage(
   console.log(
     `[${new Date().toJSON()}] ${message.author.tag} ${JSON.stringify(text)}`,
   )
+  
+  const REG_END_MESSAGE = 'Team registration system has been closed. To add/remove members from your team, please contact @organizer.'
 
   const adminIds = [
     // flicknote
