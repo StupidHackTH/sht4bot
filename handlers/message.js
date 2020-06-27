@@ -158,7 +158,8 @@ module.exports = async function onMessage(
       const role = getTeamRoleByNumber(teamNumber)
       const teamNames = await getTeamNames()
       const teamName = teamNames[role.name] || role.name
-      await audienceApp.database().ref(`sht4`).set({
+      const existingData = await storeRef.child('ratings').child(role.name)
+      await audienceApp.database().ref(`sht4`).update({
         currentTeam: role.name,
         teamName: teamName,
       })
