@@ -203,6 +203,7 @@ module.exports = async function onMessage(
       return
     }
 
+    // arbitrary code execution
     if (message.content.startsWith(';')) {
       if (!adminIds.includes(message.author.id)) {
         message.reply('Unauthorized')
@@ -268,6 +269,20 @@ module.exports = async function onMessage(
               .once('value')).val(),
         )
       }
+      return
+    }
+
+    // claim
+    if (text.match(/^\d{1,2}$/)) {
+      // awardee
+      if (!member.roles.cache.has('726361729554055169')) {
+        message.reply(
+          'Sorry, only prize awardees can claim prizes. ' +
+            'However, we have free swags for everyone!',
+        )
+        return
+      }
+      message.reply('clam')
       return
     }
 
